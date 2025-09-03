@@ -43,6 +43,7 @@ const server = http.createServer((req, res) => {
       write();
 
       writeStream.on("finish", () => {
+        console.log(`File written: ${filePath}`);
         filesCreated++;
         if (filesCreated === count) {
           res.writeHead(201, { "Content-Type": "text/plain" });
@@ -56,6 +57,40 @@ const server = http.createServer((req, res) => {
         res.end("Internal Server Error\n");
       });
     }
+  } else if (req.method === "GET") {
+    const parsedUrl = url.parse(req.url, true);
+    const directoryPath = path.join(process.cwd(), parsedUrl.pathname);
+
+    fs.readdir(directoryPath, (err, files) => {
+      if (err) {
+        res.writeHead(404, { "Content-Type": "text/plain" });
+        res.end("Directory not found\n");
+        return;
+      }
+
+      const fileDetails = [];
+      let filesProcessed = 0;
+
+      if (files.length === 0) {
+        res.writeHead(200, { "Content-Type": "text/plain" });
+        res.end("Directory is empty\n");
+        return;
+      }
+
+      files.forEach((file) => {
+        const filePath = path.join(directoryPath, file);
+        fs.stat(filePath, (err, stats) => {
+          filesProcessed++;
+          if (!err) {
+            fileDetails.push(`${file}: ${stats.size} bytes`);
+          }
+          if (filesProcessed === files.length) {
+            res.writeHead(200, { "Content-Type": "text/plain" });
+            res.end(fileDetails.join("\n") + "\n");
+          }
+        });
+      });
+    });
   } else {
     res.writeHead(200, { "Content-Type": "text/plain" });
     res.end(
