@@ -10,7 +10,7 @@ const server = http.createServer((req, res) => {
     const count = parseInt(parsedUrl.query.count) || 1;
     const size = parseInt(parsedUrl.query.size) || 100;
 
-    const directoryPath = path.join(process.cwd(), parsedUrl.pathname);
+    const directoryPath = parsedUrl.pathname;
     fs.mkdirSync(directoryPath, { recursive: true });
 
     let filesCreated = 0;
@@ -59,7 +59,16 @@ const server = http.createServer((req, res) => {
     }
   } else if (req.method === "GET") {
     const parsedUrl = url.parse(req.url, true);
-    const directoryPath = path.join(process.cwd(), parsedUrl.pathname);
+
+    if (parsedUrl.pathname === "/") {
+      res.writeHead(200, { "Content-Type": "text/plain" });
+      res.end(
+        "Send a POST request to /<directory_path> to create files.\nQuery parameters:\n- count: number of files to create (default: 1)\n- size: size of each file in MiB (default: 100)\n",
+      );
+      return;
+    }
+
+    const directoryPath = parsedUrl.pathname;
 
     fs.readdir(directoryPath, (err, files) => {
       if (err) {
@@ -91,11 +100,6 @@ const server = http.createServer((req, res) => {
         });
       });
     });
-  } else {
-    res.writeHead(200, { "Content-Type": "text/plain" });
-    res.end(
-      "Send a POST request to /<directory_path> to create files.\nQuery parameters:\n- count: number of files to create (default: 1)\n- size: size of each file in MiB (default: 100)\n",
-    );
   }
 });
 
