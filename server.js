@@ -2,13 +2,12 @@ import http from "http";
 import fs from "fs";
 import path from "path";
 import { randomUUID } from "crypto";
-import url from "url";
 
 const server = http.createServer((req, res) => {
   if (req.method === "POST") {
-    const parsedUrl = url.parse(req.url, true);
-    const count = parseInt(parsedUrl.query.count) || 1;
-    const size = parseInt(parsedUrl.query.size) || 100;
+    const parsedUrl = new URL(req.url, "http://localhost");
+    const count = parseInt(parsedUrl.searchParams.get("count")) || 1;
+    const size = parseInt(parsedUrl.searchParams.get("size")) || 100;
 
     const directoryPath = parsedUrl.pathname;
     fs.mkdirSync(directoryPath, { recursive: true });
@@ -58,7 +57,7 @@ const server = http.createServer((req, res) => {
       });
     }
   } else if (req.method === "GET") {
-    const parsedUrl = url.parse(req.url, true);
+    const parsedUrl = new URL(req.url, "http://localhost");
 
     if (parsedUrl.pathname === "/") {
       res.writeHead(200, { "Content-Type": "text/plain" });
